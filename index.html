@@ -1,0 +1,2603 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Gestión de Bibliotecas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/_sdk/element_sdk.js"></script>
+    <style>
+      body {
+        box-sizing: border-box;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      .tab-button {
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .tab-button.active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: currentColor;
+        border-radius: 3px 3px 0 0;
+      }
+
+      .card {
+        transition: all 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          var(--stat-start) 0%,
+          var(--stat-end) 100%
+        );
+      }
+
+      .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        font-weight: 600;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-content {
+        animation: scaleIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      @keyframes scaleIn {
+        from {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .search-input {
+        transition: all 0.3s ease;
+      }
+
+      .search-input:focus {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .btn-primary {
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .progress-bar {
+        height: 8px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-menu {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .stat-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .table-responsive {
+          overflow-x: auto;
+        }
+
+        .header-content {
+          flex-direction: column !important;
+          gap: 16px !important;
+        }
+
+        .header-title {
+          text-align: center;
+        }
+
+        .header-actions {
+          width: 100%;
+          justify-content: center !important;
+        }
+
+        .nav-tabs {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+          display: none;
+        }
+
+        .dashboard-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .two-column-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .action-buttons {
+          flex-direction: column !important;
+        }
+
+        .mobile-stack {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+
+        .mobile-hide {
+          display: none !important;
+        }
+
+        table {
+          font-size: 14px !important;
+        }
+
+        table th,
+        table td {
+          padding: 12px 8px !important;
+        }
+
+        .card {
+          margin: 0 !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .stat-card {
+          padding: 20px !important;
+        }
+
+        .icon-large {
+          font-size: 2rem !important;
+        }
+
+        .text-responsive {
+          font-size: 0.875rem !important;
+        }
+      }
+
+      .fade-in {
+        animation: fadeInUp 0.5s ease;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .mobile-nav-menu {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        backdrop-filter: blur(4px);
+      }
+
+      .mobile-nav-menu.open {
+        display: flex;
+      }
+
+      .mobile-nav-content {
+        width: 80%;
+        max-width: 320px;
+        height: 100%;
+        background: white;
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        overflow-y: auto;
+      }
+
+      .mobile-nav-menu.open .mobile-nav-content {
+        transform: translateX(0);
+      }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .hamburger:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .hamburger span {
+        width: 24px;
+        height: 3px;
+        background: currentColor;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+      }
+
+      @media (max-width: 768px) {
+        .hamburger {
+          display: flex;
+        }
+
+        .nav-tabs {
+          display: none !important;
+        }
+      }
+    </style>
+    <style>
+      @view-transition {
+        navigation: auto;
+      }
+    </style>
+    <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full">
+    <div id="app" class="w-full h-full overflow-auto"></div>
+    <script>
+      const defaultConfig = {
+        system_title: "Sistema de Gestión de Bibliotecas",
+        library_name: "Biblioteca Central Municipal",
+        welcome_message: "Gestión integral de recursos bibliográficos",
+        dashboard_title: "Panel de Control",
+        books_section: "Catálogo de Libros",
+        members_section: "Gestión de Miembros",
+        loans_section: "Control de Préstamos",
+        primary_color: "#2563eb",
+        secondary_color: "#ffffff",
+        text_color: "#1f2937",
+        accent_color: "#10b981",
+        surface_color: "#f8fafc",
+        font_family: "Segoe UI",
+        font_size: 16,
+      };
+
+      // Datos simulados
+      let simulatedBooks = [
+        {
+          id: "b1",
+          title: "Cien Años de Soledad",
+          author: "Gabriel García Márquez",
+          isbn: "978-0307474728",
+          category: "Ficción Literaria",
+          status: "available",
+          year: 1967,
+          pages: 417,
+          language: "Español",
+        },
+        {
+          id: "b2",
+          title: "Don Quijote de la Mancha",
+          author: "Miguel de Cervantes",
+          isbn: "978-8420412146",
+          category: "Cl��sicos",
+          status: "loaned",
+          year: 1605,
+          pages: 863,
+          language: "Español",
+        },
+        {
+          id: "b3",
+          title: "1984",
+          author: "George Orwell",
+          isbn: "978-0451524935",
+          category: "Ciencia Ficción",
+          status: "available",
+          year: 1949,
+          pages: 328,
+          language: "Inglés",
+        },
+        {
+          id: "b4",
+          title: "El Principito",
+          author: "Antoine de Saint-Exupéry",
+          isbn: "978-0156012195",
+          category: "Infantil",
+          status: "available",
+          year: 1943,
+          pages: 96,
+          language: "Francés",
+        },
+        {
+          id: "b5",
+          title: "Sapiens",
+          author: "Yuval Noah Harari",
+          isbn: "978-0062316097",
+          category: "Historia",
+          status: "loaned",
+          year: 2011,
+          pages: 443,
+          language: "Hebreo",
+        },
+        {
+          id: "b6",
+          title: "El Código Da Vinci",
+          author: "Dan Brown",
+          isbn: "978-0307474278",
+          category: "Thriller",
+          status: "available",
+          year: 2003,
+          pages: 489,
+          language: "Inglés",
+        },
+        {
+          id: "b7",
+          title: "Harry Potter y la Piedra Filosofal",
+          author: "J.K. Rowling",
+          isbn: "978-0439708180",
+          category: "Fantasía",
+          status: "loaned",
+          year: 1997,
+          pages: 309,
+          language: "Inglés",
+        },
+        {
+          id: "b8",
+          title: "El Alquimista",
+          author: "Paulo Coelho",
+          isbn: "978-0062315007",
+          category: "Ficción Literaria",
+          status: "available",
+          year: 1988,
+          pages: 197,
+          language: "Portugués",
+        },
+        {
+          id: "b9",
+          title: "Crónica de una Muerte Anunciada",
+          author: "Gabriel García Márquez",
+          isbn: "978-0307387790",
+          category: "Ficción Literaria",
+          status: "available",
+          year: 1981,
+          pages: 120,
+          language: "Español",
+        },
+        {
+          id: "b10",
+          title: "El Señor de los Anillos",
+          author: "J.R.R. Tolkien",
+          isbn: "978-0544003415",
+          category: "Fantasía",
+          status: "available",
+          year: 1954,
+          pages: 1178,
+          language: "Inglés",
+        },
+        {
+          id: "b11",
+          title: "Orgullo y Prejuicio",
+          author: "Jane Austen",
+          isbn: "978-0141439518",
+          category: "Clásicos",
+          status: "loaned",
+          year: 1813,
+          pages: 432,
+          language: "Inglés",
+        },
+        {
+          id: "b12",
+          title: "La Sombra del Viento",
+          author: "Carlos Ruiz Zafón",
+          isbn: "978-8408163381",
+          category: "Misterio",
+          status: "available",
+          year: 2001,
+          pages: 565,
+          language: "Español",
+        },
+      ];
+
+      let simulatedMembers = [
+        {
+          id: "m1",
+          name: "María García López",
+          email: "maria.garcia@email.com",
+          phone: "+34 612 345 678",
+          joinDate: "2022-01-15",
+          activeLoans: 2,
+          totalLoans: 15,
+        },
+        {
+          id: "m2",
+          name: "Juan Martínez Rodríguez",
+          email: "juan.martinez@email.com",
+          phone: "+34 623 456 789",
+          joinDate: "2021-08-22",
+          activeLoans: 0,
+          totalLoans: 28,
+        },
+        {
+          id: "m3",
+          name: "Ana Fernández Sánchez",
+          email: "ana.fernandez@email.com",
+          phone: "+34 634 567 890",
+          joinDate: "2023-03-10",
+          activeLoans: 1,
+          totalLoans: 8,
+        },
+        {
+          id: "m4",
+          name: "Carlos Pérez González",
+          email: "carlos.perez@email.com",
+          phone: "+34 645 678 901",
+          joinDate: "2022-06-05",
+          activeLoans: 3,
+          totalLoans: 22,
+        },
+        {
+          id: "m5",
+          name: "Laura Jiménez Torres",
+          email: "laura.jimenez@email.com",
+          phone: "+34 656 789 012",
+          joinDate: "2023-01-18",
+          activeLoans: 0,
+          totalLoans: 5,
+        },
+        {
+          id: "m6",
+          name: "David Ruiz Moreno",
+          email: "david.ruiz@email.com",
+          phone: "+34 667 890 123",
+          joinDate: "2021-11-30",
+          activeLoans: 1,
+          totalLoans: 19,
+        },
+        {
+          id: "m7",
+          name: "Elena Díaz Álvarez",
+          email: "elena.diaz@email.com",
+          phone: "+34 678 901 234",
+          joinDate: "2022-09-12",
+          activeLoans: 2,
+          totalLoans: 12,
+        },
+        {
+          id: "m8",
+          name: "Miguel Ángel Romero",
+          email: "miguel.romero@email.com",
+          phone: "+34 689 012 345",
+          joinDate: "2023-04-20",
+          activeLoans: 0,
+          totalLoans: 3,
+        },
+      ];
+
+      let simulatedLoans = [
+        {
+          id: "l1",
+          bookId: "b2",
+          memberId: "m1",
+          loanDate: "2024-01-05",
+          dueDate: "2024-01-19",
+          returnDate: null,
+          status: "active",
+        },
+        {
+          id: "l2",
+          bookId: "b5",
+          memberId: "m1",
+          loanDate: "2024-01-08",
+          dueDate: "2024-01-22",
+          returnDate: null,
+          status: "active",
+        },
+        {
+          id: "l3",
+          bookId: "b7",
+          memberId: "m3",
+          loanDate: "2024-01-10",
+          dueDate: "2024-01-24",
+          returnDate: null,
+          status: "active",
+        },
+        {
+          id: "l4",
+          bookId: "b11",
+          memberId: "m4",
+          loanDate: "2024-01-03",
+          dueDate: "2024-01-17",
+          returnDate: null,
+          status: "overdue",
+        },
+        {
+          id: "l5",
+          bookId: "b1",
+          memberId: "m2",
+          loanDate: "2023-12-20",
+          dueDate: "2024-01-03",
+          returnDate: "2024-01-02",
+          status: "returned",
+        },
+        {
+          id: "l6",
+          bookId: "b3",
+          memberId: "m6",
+          loanDate: "2024-01-12",
+          dueDate: "2024-01-26",
+          returnDate: null,
+          status: "active",
+        },
+        {
+          id: "l7",
+          bookId: "b4",
+          memberId: "m7",
+          loanDate: "2023-12-28",
+          dueDate: "2024-01-11",
+          returnDate: "2024-01-10",
+          status: "returned",
+        },
+        {
+          id: "l8",
+          bookId: "b6",
+          memberId: "m5",
+          loanDate: "2023-12-15",
+          dueDate: "2023-12-29",
+          returnDate: "2023-12-28",
+          status: "returned",
+        },
+      ];
+
+      let simulatedReservations = [
+        {
+          id: "r1",
+          bookId: "b2",
+          memberId: "m5",
+          reservationDate: "2024-01-14",
+          status: "pending",
+        },
+        {
+          id: "r2",
+          bookId: "b7",
+          memberId: "m2",
+          reservationDate: "2024-01-13",
+          status: "pending",
+        },
+        {
+          id: "r3",
+          bookId: "b5",
+          memberId: "m8",
+          reservationDate: "2024-01-15",
+          status: "pending",
+        },
+      ];
+
+      let currentView = "dashboard";
+      let editingRecord = null;
+      let searchTerm = "";
+      let filterCategory = "all";
+      let filterStatus = "all";
+
+      function openMobileMenu() {
+        const menu = document.getElementById("mobile-menu");
+        if (menu) {
+          menu.classList.add("open");
+        }
+      }
+
+      function closeMobileMenu() {
+        const menu = document.getElementById("mobile-menu");
+        if (menu) {
+          menu.classList.remove("open");
+        }
+      }
+
+      async function init() {
+        if (window.elementSdk) {
+          await window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (config) => {
+              const customFont =
+                config.font_family || defaultConfig.font_family;
+              const baseFont = "Segoe UI, system-ui, -apple-system, sans-serif";
+              const fontSize = config.font_size || defaultConfig.font_size;
+
+              document.body.style.fontFamily = `${customFont}, ${baseFont}`;
+              document.body.style.fontSize = `${fontSize}px`;
+
+              renderView();
+            },
+            mapToCapabilities: (config) => ({
+              recolorables: [
+                {
+                  get: () =>
+                    config.surface_color || defaultConfig.surface_color,
+                  set: (value) => {
+                    config.surface_color = value;
+                    window.elementSdk.setConfig({ surface_color: value });
+                  },
+                },
+                {
+                  get: () =>
+                    config.secondary_color || defaultConfig.secondary_color,
+                  set: (value) => {
+                    config.secondary_color = value;
+                    window.elementSdk.setConfig({ secondary_color: value });
+                  },
+                },
+                {
+                  get: () => config.text_color || defaultConfig.text_color,
+                  set: (value) => {
+                    config.text_color = value;
+                    window.elementSdk.setConfig({ text_color: value });
+                  },
+                },
+                {
+                  get: () =>
+                    config.primary_color || defaultConfig.primary_color,
+                  set: (value) => {
+                    config.primary_color = value;
+                    window.elementSdk.setConfig({ primary_color: value });
+                  },
+                },
+                {
+                  get: () => config.accent_color || defaultConfig.accent_color,
+                  set: (value) => {
+                    config.accent_color = value;
+                    window.elementSdk.setConfig({ accent_color: value });
+                  },
+                },
+              ],
+              borderables: [],
+              fontEditable: {
+                get: () => config.font_family || defaultConfig.font_family,
+                set: (value) => {
+                  config.font_family = value;
+                  window.elementSdk.setConfig({ font_family: value });
+                },
+              },
+              fontSizeable: {
+                get: () => config.font_size || defaultConfig.font_size,
+                set: (value) => {
+                  config.font_size = value;
+                  window.elementSdk.setConfig({ font_size: value });
+                },
+              },
+            }),
+            mapToEditPanelValues: (config) =>
+              new Map([
+                [
+                  "system_title",
+                  config.system_title || defaultConfig.system_title,
+                ],
+                [
+                  "library_name",
+                  config.library_name || defaultConfig.library_name,
+                ],
+                [
+                  "welcome_message",
+                  config.welcome_message || defaultConfig.welcome_message,
+                ],
+                [
+                  "dashboard_title",
+                  config.dashboard_title || defaultConfig.dashboard_title,
+                ],
+                [
+                  "books_section",
+                  config.books_section || defaultConfig.books_section,
+                ],
+                [
+                  "members_section",
+                  config.members_section || defaultConfig.members_section,
+                ],
+                [
+                  "loans_section",
+                  config.loans_section || defaultConfig.loans_section,
+                ],
+              ]),
+          });
+        }
+
+        renderView();
+      }
+
+      function getConfig() {
+        return window.elementSdk ? window.elementSdk.config : defaultConfig;
+      }
+
+      function showToast(message, type = "success") {
+        const config = getConfig();
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.style.background =
+          type === "success"
+            ? config.accent_color
+            : type === "error"
+            ? "#ef4444"
+            : "#f59e0b";
+        toast.style.color = config.secondary_color;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      function getFilteredBooks() {
+        return simulatedBooks.filter((book) => {
+          const matchesSearch =
+            book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            book.isbn.includes(searchTerm);
+          const matchesCategory =
+            filterCategory === "all" || book.category === filterCategory;
+          const matchesStatus =
+            filterStatus === "all" || book.status === filterStatus;
+          return matchesSearch && matchesCategory && matchesStatus;
+        });
+      }
+
+      function renderView() {
+        const config = getConfig();
+        const app = document.getElementById("app");
+        const fontSize = config.font_size || defaultConfig.font_size;
+
+        app.style.background = config.surface_color;
+        app.style.color = config.text_color;
+
+        let content = "";
+
+        if (currentView === "dashboard") {
+          content = renderDashboard(config, fontSize);
+        } else if (currentView === "books") {
+          content = renderBooks(config, fontSize);
+        } else if (currentView === "members") {
+          content = renderMembers(config, fontSize);
+        } else if (currentView === "loans") {
+          content = renderLoans(config, fontSize);
+        } else if (currentView === "reservations") {
+          content = renderReservations(config, fontSize);
+        } else if (currentView === "reports") {
+          content = renderReports(config, fontSize);
+        } else if (currentView === "statistics") {
+          content = renderStatistics(config, fontSize);
+        }
+
+        app.innerHTML = `
+                <div style="min-height: 100%; background: ${
+                  config.surface_color
+                };">
+                    ${renderHeader(config, fontSize)}
+                    ${content}
+                    ${renderMobileMenu(config, fontSize)}
+                </div>
+            `;
+
+        attachEventListeners();
+      }
+
+      function renderMobileMenu(config, fontSize) {
+        return `
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <div class="mobile-nav-content" style="background: ${
+                      config.secondary_color
+                    };">
+                        <div style="padding: 24px; border-bottom: 2px solid ${
+                          config.surface_color
+                        };">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="font-size: ${
+                                  fontSize * 1.25
+                                }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0;">Menú</h3>
+                                <button id="close-menu" style="background: none; border: none; font-size: ${
+                                  fontSize * 1.5
+                                }px; cursor: pointer; padding: 8px; color: ${
+          config.text_color
+        };">✕</button>
+                            </div>
+                        </div>
+                        <nav style="padding: 16px;">
+                            ${[
+                              {
+                                view: "dashboard",
+                                icon: "📊",
+                                label: config.dashboard_title || "Dashboard",
+                              },
+                              {
+                                view: "books",
+                                icon: "📖",
+                                label: config.books_section || "Libros",
+                              },
+                              {
+                                view: "members",
+                                icon: "👥",
+                                label: config.members_section || "Miembros",
+                              },
+                              {
+                                view: "loans",
+                                icon: "📤",
+                                label: config.loans_section || "Préstamos",
+                              },
+                              {
+                                view: "reservations",
+                                icon: "🔖",
+                                label: "Reservas",
+                              },
+                              {
+                                view: "statistics",
+                                icon: "📈",
+                                label: "Estadísticas",
+                              },
+                              {
+                                view: "reports",
+                                icon: "📋",
+                                label: "Informes",
+                              },
+                            ]
+                              .map(
+                                (item) => `
+                                <button class="mobile-tab-button ${
+                                  currentView === item.view ? "active" : ""
+                                }" 
+                                        data-view="${item.view}"
+                                        style="width: 100%; padding: 16px; background: ${
+                                          currentView === item.view
+                                            ? config.primary_color
+                                            : "transparent"
+                                        }; 
+                                               color: ${
+                                                 currentView === item.view
+                                                   ? config.secondary_color
+                                                   : config.text_color
+                                               }; 
+                                               border: none; border-radius: 12px; font-size: ${
+                                                 fontSize * 0.9375
+                                               }px; 
+                                               font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px;
+                                               margin-bottom: 8px; transition: all 0.3s ease;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.5
+                                    }px;">${item.icon}</span>
+                                    ${item.label}
+                                </button>
+                            `
+                              )
+                              .join("")}
+                        </nav>
+                    </div>
+                </div>
+            `;
+      }
+
+      function renderHeader(config, fontSize) {
+        return `
+                <header style="background: ${
+                  config.secondary_color
+                }; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100;">
+                    <div style="max-width: 1400px; margin: 0 auto; padding: 16px 16px;">
+                        <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 16px;">
+                            <div class="header-title" style="display: flex; align-items: center; gap: 12px;">
+                                <div class="hamburger" id="hamburger-btn" style="color: ${
+                                  config.text_color
+                                };">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <div style="background: linear-gradient(135deg, ${
+                                  config.primary_color
+                                } 0%, ${config.accent_color} 100%); color: ${
+          config.secondary_color
+        }; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: ${
+          fontSize * 1.5
+        }px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0;">
+                                    📚
+                                </div>
+                                <div style="min-width: 0;">
+                                    <h1 style="font-size: ${
+                                      fontSize * 1.25
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 4px 0; line-height: 1.2;">
+                                        ${
+                                          config.system_title ||
+                                          defaultConfig.system_title
+                                        }
+                                    </h1>
+                                    <p style="font-size: ${
+                                      fontSize * 0.75
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.7; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        ${
+                                          config.library_name ||
+                                          defaultConfig.library_name
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                                <div style="background: ${
+                                  config.surface_color
+                                }; padding: 8px 14px; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.125
+                                    }px;">🔔</span>
+                                    <span style="background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: ${
+                                      fontSize * 0.75
+                                    }px; font-weight: 700;">3</span>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, ${
+                                  config.primary_color
+                                } 0%, ${config.accent_color} 100%); color: ${
+          config.secondary_color
+        }; display: flex; align-items: center; justify-content: center; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 700; cursor: pointer; flex-shrink: 0;">
+                                    A
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="nav-tabs" style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch;">
+                            ${[
+                              {
+                                view: "dashboard",
+                                icon: "📊",
+                                label: config.dashboard_title || "Dashboard",
+                              },
+                              {
+                                view: "books",
+                                icon: "📖",
+                                label: config.books_section || "Libros",
+                              },
+                              {
+                                view: "members",
+                                icon: "👥",
+                                label: config.members_section || "Miembros",
+                              },
+                              {
+                                view: "loans",
+                                icon: "📤",
+                                label: config.loans_section || "Préstamos",
+                              },
+                              {
+                                view: "reservations",
+                                icon: "🔖",
+                                label: "Reservas",
+                              },
+                              {
+                                view: "statistics",
+                                icon: "📈",
+                                label: "Estadísticas",
+                              },
+                              {
+                                view: "reports",
+                                icon: "📋",
+                                label: "Informes",
+                              },
+                            ]
+                              .map(
+                                (item) => `
+                                <button class="tab-button ${
+                                  currentView === item.view ? "active" : ""
+                                }" 
+                                        data-view="${item.view}"
+                                        style="padding: 10px 16px; background: ${
+                                          currentView === item.view
+                                            ? config.primary_color
+                                            : "transparent"
+                                        }; 
+                                               color: ${
+                                                 currentView === item.view
+                                                   ? config.secondary_color
+                                                   : config.text_color
+                                               }; 
+                                               border: none; border-radius: 10px; font-size: ${
+                                                 fontSize * 0.8125
+                                               }px; 
+                                               font-weight: 600; cursor: pointer; white-space: nowrap; 
+                                               transition: all 0.3s ease; flex-shrink: 0;">
+                                    ${item.icon} ${item.label}
+                                </button>
+                            `
+                              )
+                              .join("")}
+                        </nav>
+                    </div>
+                </header>
+            `;
+      }
+
+      function renderDashboard(config, fontSize) {
+        const activeLoans = simulatedLoans.filter(
+          (l) => l.status === "active"
+        ).length;
+        const overdueLoans = simulatedLoans.filter(
+          (l) => l.status === "overdue"
+        ).length;
+        const availableBooks = simulatedBooks.filter(
+          (b) => b.status === "available"
+        ).length;
+        const recentLoans = simulatedLoans.slice(0, 5);
+
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                        <div class="card stat-card" style="--stat-start: ${
+                          config.primary_color
+                        }; --stat-end: #1e40af; padding: 28px; border-radius: 16px; color: ${
+          config.secondary_color
+        }; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+                            <div style="font-size: ${
+                              fontSize * 3
+                            }px; margin-bottom: 12px; opacity: 0.9;">📚</div>
+                            <div style="font-size: ${
+                              fontSize * 2.5
+                            }px; font-weight: 700; margin-bottom: 8px;">${
+          simulatedBooks.length
+        }</div>
+                            <div style="font-size: ${
+                              fontSize * 0.875
+                            }px; opacity: 0.9; font-weight: 600;">Total de Libros en Catálogo</div>
+                            <div style="margin-top: 16px; font-size: ${
+                              fontSize * 0.75
+                            }px; opacity: 0.8;">${availableBooks} disponibles</div>
+                        </div>
+                        
+                        <div class="card stat-card" style="--stat-start: ${
+                          config.accent_color
+                        }; --stat-end: #059669; padding: 28px; border-radius: 16px; color: ${
+          config.secondary_color
+        }; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                            <div style="font-size: ${
+                              fontSize * 3
+                            }px; margin-bottom: 12px; opacity: 0.9;">👥</div>
+                            <div style="font-size: ${
+                              fontSize * 2.5
+                            }px; font-weight: 700; margin-bottom: 8px;">${
+          simulatedMembers.length
+        }</div>
+                            <div style="font-size: ${
+                              fontSize * 0.875
+                            }px; opacity: 0.9; font-weight: 600;">Miembros Activos</div>
+                            <div style="margin-top: 16px; font-size: ${
+                              fontSize * 0.75
+                            }px; opacity: 0.8;">+2 este mes</div>
+                        </div>
+                        
+                        <div class="card stat-card" style="--stat-start: #f59e0b; --stat-end: #d97706; padding: 28px; border-radius: 16px; color: ${
+                          config.secondary_color
+                        }; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                            <div style="font-size: ${
+                              fontSize * 3
+                            }px; margin-bottom: 12px; opacity: 0.9;">📤</div>
+                            <div style="font-size: ${
+                              fontSize * 2.5
+                            }px; font-weight: 700; margin-bottom: 8px;">${activeLoans}</div>
+                            <div style="font-size: ${
+                              fontSize * 0.875
+                            }px; opacity: 0.9; font-weight: 600;">Préstamos Activos</div>
+                            <div style="margin-top: 16px; font-size: ${
+                              fontSize * 0.75
+                            }px; opacity: 0.8;">${overdueLoans} vencidos</div>
+                        </div>
+                        
+                        <div class="card stat-card" style="--stat-start: #8b5cf6; --stat-end: #6d28d9; padding: 28px; border-radius: 16px; color: ${
+                          config.secondary_color
+                        }; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                            <div style="font-size: ${
+                              fontSize * 3
+                            }px; margin-bottom: 12px; opacity: 0.9;">🔖</div>
+                            <div style="font-size: ${
+                              fontSize * 2.5
+                            }px; font-weight: 700; margin-bottom: 8px;">${
+          simulatedReservations.length
+        }</div>
+                            <div style="font-size: ${
+                              fontSize * 0.875
+                            }px; opacity: 0.9; font-weight: 600;">Reservas Pendientes</div>
+                            <div style="margin-top: 16px; font-size: ${
+                              fontSize * 0.75
+                            }px; opacity: 0.8;">En espera</div>
+                        </div>
+                    </div>
+                    
+                    <div class="two-column-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px;">
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 28px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📈</span>
+                                Actividad Reciente
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${recentLoans
+                                  .map((loan) => {
+                                    const book = simulatedBooks.find(
+                                      (b) => b.id === loan.bookId
+                                    );
+                                    const member = simulatedMembers.find(
+                                      (m) => m.id === loan.memberId
+                                    );
+                                    return `
+                                        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: ${
+                                          config.surface_color
+                                        }; border-radius: 12px;">
+                                            <div style="width: 48px; height: 48px; background: ${
+                                              config.primary_color
+                                            }; color: ${
+                                      config.secondary_color
+                                    }; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: ${
+                                      fontSize * 1.25
+                                    }px; flex-shrink: 0;">
+                                                📖
+                                            </div>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div style="font-size: ${
+                                                  fontSize * 0.875
+                                                }px; font-weight: 600; color: ${
+                                      config.text_color
+                                    }; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                    ${book?.title || "N/A"}
+                                                </div>
+                                                <div style="font-size: ${
+                                                  fontSize * 0.75
+                                                }px; color: ${
+                                      config.text_color
+                                    }; opacity: 0.6;">
+                                                    Prestado a ${
+                                                      member?.name || "N/A"
+                                                    } • ${new Date(
+                                      loan.loanDate
+                                    ).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <span class="status-badge" style="background: ${
+                                              loan.status === "active"
+                                                ? "#f59e0b"
+                                                : loan.status === "overdue"
+                                                ? "#ef4444"
+                                                : config.accent_color
+                                            }; color: ${
+                                      config.secondary_color
+                                    }; flex-shrink: 0;">
+                                                ${
+                                                  loan.status === "active"
+                                                    ? "Activo"
+                                                    : loan.status === "overdue"
+                                                    ? "Vencido"
+                                                    : "Devuelto"
+                                                }
+                                            </span>
+                                        </div>
+                                    `;
+                                  })
+                                  .join("")}
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 28px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">⚡</span>
+                                Acciones Rápidas
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <button class="btn-primary tab-button" data-view="books" style="background: ${
+                                  config.primary_color
+                                }; color: ${
+          config.secondary_color
+        }; padding: 16px; border: none; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.5
+                                    }px;">📖</span>
+                                    <div>
+                                        <div>Gestionar Libros</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; opacity: 0.8; font-weight: 400;">Catalogación y búsqueda</div>
+                                    </div>
+                                </button>
+                                <button class="btn-primary tab-button" data-view="loans" style="background: ${
+                                  config.accent_color
+                                }; color: ${
+          config.secondary_color
+        }; padding: 16px; border: none; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.5
+                                    }px;">📤</span>
+                                    <div>
+                                        <div>Nuevo Préstamo</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; opacity: 0.8; font-weight: 400;">Registrar préstamo</div>
+                                    </div>
+                                </button>
+                                <button class="btn-primary tab-button" data-view="members" style="background: #8b5cf6; color: ${
+                                  config.secondary_color
+                                }; padding: 16px; border: none; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.5
+                                    }px;">👥</span>
+                                    <div>
+                                        <div>Ver Miembros</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; opacity: 0.8; font-weight: 400;">Gestión de usuarios</div>
+                                    </div>
+                                </button>
+                                <button class="btn-primary tab-button" data-view="reports" style="background: #f59e0b; color: ${
+                                  config.secondary_color
+                                }; padding: 16px; border: none; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: ${
+                                      fontSize * 1.5
+                                    }px;">📋</span>
+                                    <div>
+                                        <div>Generar Informe</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; opacity: 0.8; font-weight: 400;">Reportes administrativos</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="background: ${
+                      config.secondary_color
+                    }; padding: 28px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h3 style="font-size: ${
+                          fontSize * 1.25
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: ${
+                              fontSize * 1.5
+                            }px;">🎯</span>
+                            Métricas de Rendimiento
+                        </h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Tasa de Ocupación</span>
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        };">${Math.round(
+          (simulatedBooks.filter((b) => b.status === "loaned").length /
+            simulatedBooks.length) *
+            100
+        )}%</span>
+                                </div>
+                                <div class="progress-bar" style="background: ${
+                                  config.surface_color
+                                };">
+                                    <div class="progress-fill" style="width: ${
+                                      (simulatedBooks.filter(
+                                        (b) => b.status === "loaned"
+                                      ).length /
+                                        simulatedBooks.length) *
+                                      100
+                                    }%; background: ${
+          config.primary_color
+        };"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Satisfacción Usuarios</span>
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; font-weight: 700; color: ${
+          config.accent_color
+        };">94%</span>
+                                </div>
+                                <div class="progress-bar" style="background: ${
+                                  config.surface_color
+                                };">
+                                    <div class="progress-fill" style="width: 94%; background: ${
+                                      config.accent_color
+                                    };"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Devoluciones a Tiempo</span>
+                                    <span style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; font-weight: 700; color: #f59e0b;">${Math.round(
+          (simulatedLoans.filter((l) => l.status === "returned").length /
+            simulatedLoans.length) *
+            100
+        )}%</span>
+                                </div>
+                                <div class="progress-bar" style="background: ${
+                                  config.surface_color
+                                };">
+                                    <div class="progress-fill" style="width: ${
+                                      (simulatedLoans.filter(
+                                        (l) => l.status === "returned"
+                                      ).length /
+                                        simulatedLoans.length) *
+                                      100
+                                    }%; background: #f59e0b;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+      }
+
+      function renderBooks(config, fontSize) {
+        const books = getFilteredBooks();
+        const categories = [...new Set(simulatedBooks.map((b) => b.category))];
+
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div style="margin-bottom: 24px;">
+                        <h2 style="font-size: ${
+                          fontSize * 1.5
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 16px 0;">
+                            ${
+                              config.books_section ||
+                              defaultConfig.books_section
+                            }
+                        </h2>
+                        <div class="mobile-stack" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <input type="text" id="search-books" placeholder="🔍 Buscar libros..." 
+                                   class="search-input"
+                                   value="${searchTerm}"
+                                   style="padding: 12px 16px; border: 2px solid ${
+                                     config.surface_color
+                                   }; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; min-width: 200px; flex: 1; outline: none;">
+                            <select id="filter-category" style="padding: 12px 16px; border: 2px solid ${
+                              config.surface_color
+                            }; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; outline: none; cursor: pointer; flex: 1; min-width: 150px;">
+                                <option value="all">Todas las categorías</option>
+                                ${categories
+                                  .map(
+                                    (cat) =>
+                                      `<option value="${cat}" ${
+                                        filterCategory === cat ? "selected" : ""
+                                      }>${cat}</option>`
+                                  )
+                                  .join("")}
+                            </select>
+                            <select id="filter-status" style="padding: 12px 16px; border: 2px solid ${
+                              config.surface_color
+                            }; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; outline: none; cursor: pointer; flex: 1; min-width: 150px;">
+                                <option value="all">Todos los estados</option>
+                                <option value="available" ${
+                                  filterStatus === "available" ? "selected" : ""
+                                }>Disponibles</option>
+                                <option value="loaned" ${
+                                  filterStatus === "loaned" ? "selected" : ""
+                                }>Prestados</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    ${
+                      books.length === 0
+                        ? `
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 64px; border-radius: 16px; text-align: center;">
+                            <div style="font-size: ${
+                              fontSize * 4
+                            }px; margin-bottom: 24px;">📚</div>
+                            <p style="font-size: ${fontSize * 1.25}px; color: ${
+                            config.text_color
+                          }; opacity: 0.6; margin: 0;">
+                                No se encontraron libros con los criterios seleccionados
+                            </p>
+                        </div>
+                    `
+                        : `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                            ${books
+                              .map(
+                                (book) => `
+                                <div class="card" style="background: ${
+                                  config.secondary_color
+                                }; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div style="background: linear-gradient(135deg, ${
+                                      config.primary_color
+                                    } 0%, ${
+                                  config.accent_color
+                                } 100%); padding: 32px; text-align: center;">
+                                        <div style="font-size: ${
+                                          fontSize * 4
+                                        }px; margin-bottom: 16px;">��</div>
+                                        <span class="status-badge" style="background: ${
+                                          book.status === "available"
+                                            ? config.accent_color
+                                            : "#ef4444"
+                                        }; color: ${config.secondary_color};">
+                                            ${
+                                              book.status === "available"
+                                                ? "✓ Disponible"
+                                                : "✗ Prestado"
+                                            }
+                                        </span>
+                                    </div>
+                                    <div style="padding: 24px;">
+                                        <h3 style="font-size: ${
+                                          fontSize * 1.125
+                                        }px; font-weight: 700; color: ${
+                                  config.text_color
+                                }; margin: 0 0 8px 0; line-height: 1.4;">
+                                            ${book.title}
+                                        </h3>
+                                        <p style="font-size: ${
+                                          fontSize * 0.875
+                                        }px; color: ${
+                                  config.text_color
+                                }; opacity: 0.7; margin: 0 0 16px 0;">
+                                            por ${book.author}
+                                        </p>
+                                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding: 16px; background: ${
+                                          config.surface_color
+                                        }; border-radius: 12px;">
+                                            <div style="display: flex; justify-content: space-between; font-size: ${
+                                              fontSize * 0.75
+                                            }px;">
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; opacity: 0.6;">ISBN:</span>
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; font-weight: 600;">${
+                                  book.isbn
+                                }</span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; font-size: ${
+                                              fontSize * 0.75
+                                            }px;">
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; opacity: 0.6;">Categoría:</span>
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; font-weight: 600;">${
+                                  book.category
+                                }</span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; font-size: ${
+                                              fontSize * 0.75
+                                            }px;">
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; opacity: 0.6;">Año:</span>
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; font-weight: 600;">${
+                                  book.year
+                                }</span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; font-size: ${
+                                              fontSize * 0.75
+                                            }px;">
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; opacity: 0.6;">Páginas:</span>
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; font-weight: 600;">${
+                                  book.pages
+                                }</span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; font-size: ${
+                                              fontSize * 0.75
+                                            }px;">
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; opacity: 0.6;">Idioma:</span>
+                                                <span style="color: ${
+                                                  config.text_color
+                                                }; font-weight: 600;">${
+                                  book.language
+                                }</span>
+                                            </div>
+                                        </div>
+                                        <button class="btn-primary" onclick="showToast('Funcionalidad de demostración', 'info')" style="width: 100%; background: ${
+                                          config.primary_color
+                                        }; color: ${
+                                  config.secondary_color
+                                }; padding: 12px; border: none; border-radius: 10px; font-size: ${
+                                  fontSize * 0.875
+                                }px; font-weight: 600; cursor: pointer;">
+                                            Ver Detalles
+                                        </button>
+                                    </div>
+                                </div>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                    `
+                    }
+                </main>
+            `;
+      }
+
+      function renderMembers(config, fontSize) {
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="font-size: ${
+                          fontSize * 1.75
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0;">
+                            ${
+                              config.members_section ||
+                              defaultConfig.members_section
+                            }
+                        </h2>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px;">
+                        ${simulatedMembers
+                          .map(
+                            (member) => `
+                            <div class="card" style="background: ${
+                              config.secondary_color
+                            }; border-radius: 16px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, ${
+                                      config.primary_color
+                                    } 0%, ${
+                              config.accent_color
+                            } 100%); color: ${
+                              config.secondary_color
+                            }; display: flex; align-items: center; justify-content: center; font-size: ${
+                              fontSize * 1.75
+                            }px; font-weight: 700; margin-right: 16px; flex-shrink: 0;">
+                                        ${member.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-size: ${
+                                          fontSize * 1.125
+                                        }px; font-weight: 700; color: ${
+                              config.text_color
+                            }; margin-bottom: 4px;">${member.name}</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6;">ID: ${member.id}</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding: 16px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: ${
+                                          fontSize * 1.25
+                                        }px;">📧</span>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 2px;">Email</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${
+                              member.email
+                            }</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: ${
+                                          fontSize * 1.25
+                                        }px;">📱</span>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 2px;">Teléfono</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            };">${member.phone}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: ${
+                                          fontSize * 1.25
+                                        }px;">📅</span>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 2px;">Miembro desde</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            };">${new Date(
+                              member.joinDate
+                            ).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                                    <div style="text-align: center; padding: 16px; background: ${
+                                      config.surface_color
+                                    }; border-radius: 12px;">
+                                        <div style="font-size: ${
+                                          fontSize * 1.75
+                                        }px; font-weight: 700; color: ${
+                              config.primary_color
+                            }; margin-bottom: 4px;">${member.activeLoans}</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6;">Préstamos Activos</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 16px; background: ${
+                                      config.surface_color
+                                    }; border-radius: 12px;">
+                                        <div style="font-size: ${
+                                          fontSize * 1.75
+                                        }px; font-weight: 700; color: ${
+                              config.accent_color
+                            }; margin-bottom: 4px;">${member.totalLoans}</div>
+                                        <div style="font-size: ${
+                                          fontSize * 0.75
+                                        }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6;">Total Histórico</div>
+                                    </div>
+                                </div>
+                                <button class="btn-primary" onclick="showToast('Funcionalidad de demostración', 'info')" style="width: 100%; background: ${
+                                  config.primary_color
+                                }; color: ${
+                              config.secondary_color
+                            }; padding: 12px; border: none; border-radius: 10px; font-size: ${
+                              fontSize * 0.875
+                            }px; font-weight: 600; cursor: pointer;">
+                                    Ver Historial
+                                </button>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </main>
+            `;
+      }
+
+      function renderLoans(config, fontSize) {
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="font-size: ${
+                          fontSize * 1.75
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0;">
+                            ${
+                              config.loans_section ||
+                              defaultConfig.loans_section
+                            }
+                        </h2>
+                    </div>
+                    
+                    <div class="card table-responsive" style="background: ${
+                      config.secondary_color
+                    }; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                            <thead>
+                                <tr style="background: ${
+                                  config.surface_color
+                                };">
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Libro</th>
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Miembro</th>
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Préstamo</th>
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Vencimiento</th>
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Estado</th>
+                                    <th style="padding: 16px; text-align: left; font-size: ${
+                                      fontSize * 0.8125
+                                    }px; font-weight: 700; color: ${
+          config.text_color
+        };">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${simulatedLoans
+                                  .map((loan) => {
+                                    const book = simulatedBooks.find(
+                                      (b) => b.id === loan.bookId
+                                    );
+                                    const member = simulatedMembers.find(
+                                      (m) => m.id === loan.memberId
+                                    );
+                                    return `
+                                        <tr style="border-top: 2px solid ${
+                                          config.surface_color
+                                        };">
+                                            <td style="padding: 16px;">
+                                                <div style="font-size: ${
+                                                  fontSize * 0.8125
+                                                }px; font-weight: 600; color: ${
+                                      config.text_color
+                                    }; margin-bottom: 4px;">${
+                                      book?.title || "N/A"
+                                    }</div>
+                                                <div style="font-size: ${
+                                                  fontSize * 0.7
+                                                }px; color: ${
+                                      config.text_color
+                                    }; opacity: 0.6;">${
+                                      book?.author || "N/A"
+                                    }</div>
+                                            </td>
+                                            <td style="padding: 16px;">
+                                                <div style="font-size: ${
+                                                  fontSize * 0.8125
+                                                }px; color: ${
+                                      config.text_color
+                                    };">${member?.name || "N/A"}</div>
+                                            </td>
+                                            <td style="padding: 16px; font-size: ${
+                                              fontSize * 0.8125
+                                            }px; color: ${
+                                      config.text_color
+                                    };">${new Date(
+                                      loan.loanDate
+                                    ).toLocaleDateString()}</td>
+                                            <td style="padding: 16px; font-size: ${
+                                              fontSize * 0.8125
+                                            }px; color: ${
+                                      config.text_color
+                                    };">${new Date(
+                                      loan.dueDate
+                                    ).toLocaleDateString()}</td>
+                                            <td style="padding: 16px;">
+                                                <span class="status-badge" style="background: ${
+                                                  loan.status === "active"
+                                                    ? "#f59e0b"
+                                                    : loan.status === "overdue"
+                                                    ? "#ef4444"
+                                                    : config.accent_color
+                                                }; color: ${
+                                      config.secondary_color
+                                    };">
+                                                    ${
+                                                      loan.status === "active"
+                                                        ? "Activo"
+                                                        : loan.status ===
+                                                          "overdue"
+                                                        ? "Vencido"
+                                                        : "Devuelto"
+                                                    }
+                                                </span>
+                                            </td>
+                                            <td style="padding: 16px;">
+                                                ${
+                                                  loan.status !== "returned"
+                                                    ? `
+                                                    <button class="btn-primary" onclick="showToast('Libro devuelto correctamente', 'success')" style="background: ${
+                                                      config.accent_color
+                                                    }; color: ${
+                                                        config.secondary_color
+                                                      }; padding: 8px 14px; border: none; border-radius: 8px; font-size: ${
+                                                        fontSize * 0.7
+                                                      }px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                        Devolver
+                                                    </button>
+                                                `
+                                                    : `
+                                                    <span style="font-size: ${
+                                                      fontSize * 0.7
+                                                    }px; color: ${
+                                                        config.text_color
+                                                      }; opacity: 0.5;">Completado</span>
+                                                `
+                                                }
+                                            </td>
+                                        </tr>
+                                    `;
+                                  })
+                                  .join("")}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            `;
+      }
+
+      function renderReservations(config, fontSize) {
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="font-size: ${
+                          fontSize * 1.75
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0;">
+                            Sistema de Reservas
+                        </h2>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px;">
+                        ${simulatedReservations
+                          .map((reservation) => {
+                            const book = simulatedBooks.find(
+                              (b) => b.id === reservation.bookId
+                            );
+                            const member = simulatedMembers.find(
+                              (m) => m.id === reservation.memberId
+                            );
+                            return `
+                                <div class="card" style="background: ${
+                                  config.secondary_color
+                                }; border-radius: 16px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div style="display: flex; align-items: start; margin-bottom: 20px;">
+                                        <div style="font-size: ${
+                                          fontSize * 3
+                                        }px; margin-right: 16px;">🔖</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: ${
+                                              fontSize * 1.125
+                                            }px; font-weight: 700; color: ${
+                              config.text_color
+                            }; margin-bottom: 6px;">${
+                              book?.title || "N/A"
+                            }</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6;">${book?.author || "N/A"}</div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 16px; background: ${
+                                      config.surface_color
+                                    }; border-radius: 12px; margin-bottom: 20px;">
+                                        <div style="margin-bottom: 12px;">
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 4px;">Solicitado por</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            }; font-weight: 600;">${member?.name || "N/A"}</div>
+                                        </div>
+                                        <div style="margin-bottom: 12px;">
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 4px;">Email</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            };">${member?.email || "N/A"}</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.75
+                                            }px; color: ${
+                              config.text_color
+                            }; opacity: 0.6; margin-bottom: 4px;">Fecha de Solicitud</div>
+                                            <div style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                              config.text_color
+                            };">${new Date(
+                              reservation.reservationDate
+                            ).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                    <div class="action-buttons" style="display: flex; gap: 12px;">
+                                        <button class="btn-primary" onclick="showToast('Reserva confirmada', 'success')" style="flex: 1; background: ${
+                                          config.accent_color
+                                        }; color: ${
+                              config.secondary_color
+                            }; padding: 12px; border: none; border-radius: 10px; font-size: ${
+                              fontSize * 0.875
+                            }px; font-weight: 600; cursor: pointer;">
+                                            ✓ Confirmar
+                                        </button>
+                                        <button class="btn-primary" onclick="showToast('Reserva cancelada', 'error')" style="flex: 1; background: #ef4444; color: ${
+                                          config.secondary_color
+                                        }; padding: 12px; border: none; border-radius: 10px; font-size: ${
+                              fontSize * 0.875
+                            }px; font-weight: 600; cursor: pointer;">
+                                            ✗ Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                          })
+                          .join("")}
+                    </div>
+                </main>
+            `;
+      }
+
+      function renderStatistics(config, fontSize) {
+        const categoryCounts = {};
+        simulatedBooks.forEach((book) => {
+          categoryCounts[book.category] =
+            (categoryCounts[book.category] || 0) + 1;
+        });
+
+        const maxCount = Math.max(...Object.values(categoryCounts));
+
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <h2 style="font-size: ${
+                      fontSize * 1.75
+                    }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 32px 0;">
+                        Estadísticas Detalladas
+                    </h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📊</span>
+                                Distribución por Categoría
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${Object.entries(categoryCounts)
+                                  .map(
+                                    ([category, count]) => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; color: ${
+                                      config.text_color
+                                    }; font-weight: 600;">${category}</span>
+                                            <span style="font-size: ${
+                                              fontSize * 0.875
+                                            }px; font-weight: 700; color: ${
+                                      config.primary_color
+                                    };">${count} libros</span>
+                                        </div>
+                                        <div class="progress-bar" style="background: ${
+                                          config.surface_color
+                                        };">
+                                            <div class="progress-fill" style="width: ${
+                                              (count / maxCount) * 100
+                                            }%; background: ${
+                                      config.primary_color
+                                    };"></div>
+                                        </div>
+                                    </div>
+                                `
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📈</span>
+                                Métricas de Uso
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <div style="padding: 20px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px; text-align: center;">
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6; margin-bottom: 8px;">Promedio de Préstamos por Miembro</div>
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        };">${Math.round(simulatedLoans.length / simulatedMembers.length)}</div>
+                                </div>
+                                <div style="padding: 20px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px; text-align: center;">
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6; margin-bottom: 8px;">Tasa de Rotación de Libros</div>
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.accent_color
+        };">${Math.round(
+          (simulatedLoans.length / simulatedBooks.length) * 100
+        )}%</div>
+                                </div>
+                                <div style="padding: 20px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px; text-align: center;">
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6; margin-bottom: 8px;">Duración Promedio de Préstamo</div>
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: #f59e0b;">12 días</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+      }
+
+      function renderReports(config, fontSize) {
+        const totalBooks = simulatedBooks.length;
+        const availableBooks = simulatedBooks.filter(
+          (b) => b.status === "available"
+        ).length;
+        const loanedBooks = simulatedBooks.filter(
+          (b) => b.status === "loaned"
+        ).length;
+        const activeLoans = simulatedLoans.filter(
+          (l) => l.status === "active"
+        ).length;
+        const overdueLoans = simulatedLoans.filter(
+          (l) => l.status === "overdue"
+        ).length;
+        const completedLoans = simulatedLoans.filter(
+          (l) => l.status === "returned"
+        ).length;
+
+        return `
+                <main style="max-width: 1400px; margin: 0 auto; padding: 24px 16px;" class="fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                        <h2 style="font-size: ${
+                          fontSize * 1.75
+                        }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0;">
+                            Informes Administrativos
+                        </h2>
+                        <button class="btn-primary" onclick="showToast('Informe exportado correctamente', 'success')" style="background: ${
+                          config.primary_color
+                        }; color: ${
+          config.secondary_color
+        }; padding: 14px 28px; border: none; border-radius: 12px; font-size: ${
+          fontSize * 0.875
+        }px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: ${
+                              fontSize * 1.25
+                            }px;">📥</span>
+                            Exportar Informe PDF
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; gap: 24px;">
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📚</span>
+                                Resumen de Colección
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        }; margin-bottom: 8px;">${totalBooks}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Total de Libros</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.accent_color
+        }; margin-bottom: 8px;">${availableBooks}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Disponibles</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: #f59e0b; margin-bottom: 8px;">${loanedBooks}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Prestados</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        }; margin-bottom: 8px;">${Math.round(
+          (availableBooks / totalBooks) * 100
+        )}%</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Disponibilidad</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📤</span>
+                                Estado de Préstamos
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: #f59e0b; margin-bottom: 8px;">${activeLoans}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Préstamos Activos</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: #ef4444; margin-bottom: 8px;">${overdueLoans}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Vencidos</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.accent_color
+        }; margin-bottom: 8px;">${completedLoans}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Completados</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        }; margin-bottom: 8px;">${simulatedLoans.length}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        };">Total Histórico</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">👥</span>
+                                Actividad de Miembros
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.primary_color
+        }; margin-bottom: 8px;">${simulatedMembers.length}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; margin-bottom: 16px;">Total de Miembros</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.75
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6;">Registrados en el sistema</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: ${
+          config.accent_color
+        }; margin-bottom: 8px;">${
+          simulatedMembers.filter((m) => m.activeLoans > 0).length
+        }</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; margin-bottom: 16px;">Miembros Activos</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.75
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6;">Con préstamos vigentes</div>
+                                </div>
+                                <div style="text-align: center; padding: 24px; background: ${
+                                  config.surface_color
+                                }; border-radius: 12px;">
+                                    <div style="font-size: ${
+                                      fontSize * 2.5
+                                    }px; font-weight: 700; color: #f59e0b; margin-bottom: 8px;">${Math.round(
+          simulatedMembers.reduce((sum, m) => sum + m.totalLoans, 0) /
+            simulatedMembers.length
+        )}</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.875
+                                    }px; color: ${
+          config.text_color
+        }; margin-bottom: 16px;">Promedio de Préstamos</div>
+                                    <div style="font-size: ${
+                                      fontSize * 0.75
+                                    }px; color: ${
+          config.text_color
+        }; opacity: 0.6;">Por miembro</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: ${
+                          config.secondary_color
+                        }; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <h3 style="font-size: ${
+                              fontSize * 1.25
+                            }px; font-weight: 700; color: ${
+          config.text_color
+        }; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: ${
+                                  fontSize * 1.5
+                                }px;">📋</span>
+                                Resumen Ejecutivo
+                            </h3>
+                            <div style="font-size: ${
+                              fontSize * 0.875
+                            }px; color: ${
+          config.text_color
+        }; line-height: 1.8;">
+                                <p style="margin: 0 0 16px 0;">✓ La biblioteca cuenta con <strong>${totalBooks} libros</strong> en su catálogo, distribuidos en <strong>${
+          Object.keys({ ...new Set(simulatedBooks.map((b) => b.category)) })
+            .length
+        } categorías</strong> diferentes.</p>
+                                <p style="margin: 0 0 16px 0;">✓ Actualmente hay <strong>${activeLoans} préstamos activos</strong> y <strong>${overdueLoans} préstamos vencidos</strong> que requieren seguimiento.</p>
+                                <p style="margin: 0 0 16px 0;">✓ La tasa de ocupación de la colección es del <strong>${Math.round(
+                                  (loanedBooks / totalBooks) * 100
+                                )}%</strong>, con una disponibilidad del <strong>${Math.round(
+          (availableBooks / totalBooks) * 100
+        )}%</strong>.</p>
+                                <p style="margin: 0 0 16px 0;">✓ Se han registrado <strong>${
+                                  simulatedMembers.length
+                                } miembros</strong> en el sistema, con un promedio de <strong>${Math.round(
+          simulatedLoans.length / simulatedMembers.length
+        )} préstamos por miembro</strong>.</p>
+                                <p style="margin: 0;">✓ Hay <strong>${
+                                  simulatedReservations.length
+                                } reservas pendientes</strong> en espera de disponibilidad de ejemplares.</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+      }
+
+      function attachEventListeners() {
+        document
+          .querySelectorAll(".tab-button, .mobile-tab-button")
+          .forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              currentView = e.currentTarget.dataset.view;
+              closeMobileMenu();
+              renderView();
+            });
+          });
+
+        const hamburgerBtn = document.getElementById("hamburger-btn");
+        if (hamburgerBtn) {
+          hamburgerBtn.addEventListener("click", openMobileMenu);
+        }
+
+        const closeMenuBtn = document.getElementById("close-menu");
+        if (closeMenuBtn) {
+          closeMenuBtn.addEventListener("click", closeMobileMenu);
+        }
+
+        const mobileMenu = document.getElementById("mobile-menu");
+        if (mobileMenu) {
+          mobileMenu.addEventListener("click", (e) => {
+            if (e.target === mobileMenu) {
+              closeMobileMenu();
+            }
+          });
+        }
+
+        const searchInput = document.getElementById("search-books");
+        if (searchInput) {
+          searchInput.addEventListener("input", (e) => {
+            searchTerm = e.target.value;
+            renderView();
+          });
+        }
+
+        const filterCategorySelect = document.getElementById("filter-category");
+        if (filterCategorySelect) {
+          filterCategorySelect.addEventListener("change", (e) => {
+            filterCategory = e.target.value;
+            renderView();
+          });
+        }
+
+        const filterStatusSelect = document.getElementById("filter-status");
+        if (filterStatusSelect) {
+          filterStatusSelect.addEventListener("change", (e) => {
+            filterStatus = e.target.value;
+            renderView();
+          });
+        }
+      }
+
+      init();
+    </script>
+    <script>
+      (function () {
+        function c() {
+          var b = a.contentDocument || a.contentWindow.document;
+          if (b) {
+            var d = b.createElement("script");
+            d.innerHTML =
+              "window.__CF$cv$params={r:'9ad9895791049250',t:'MTc2NTY3MTYzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+            b.getElementsByTagName("head")[0].appendChild(d);
+          }
+        }
+        if (document.body) {
+          var a = document.createElement("iframe");
+          a.height = 1;
+          a.width = 1;
+          a.style.position = "absolute";
+          a.style.top = 0;
+          a.style.left = 0;
+          a.style.border = "none";
+          a.style.visibility = "hidden";
+          document.body.appendChild(a);
+          if ("loading" !== document.readyState) c();
+          else if (window.addEventListener)
+            document.addEventListener("DOMContentLoaded", c);
+          else {
+            var e = document.onreadystatechange || function () {};
+            document.onreadystatechange = function (b) {
+              e(b);
+              "loading" !== document.readyState &&
+                ((document.onreadystatechange = e), c());
+            };
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
